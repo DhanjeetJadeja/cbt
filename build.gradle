@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '3.141.59'
+    testImplementation 'junit:junit:4.12'
+}

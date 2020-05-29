@@ -1,13 +1,11 @@
 package cbt.dsl;
 
-import org.openqa.selenium.remote.BrowserType;
-
 public class TestConfig {
     private final int width;
     private final int height;
-    private final BrowserType bt;
+    private final String bt;
 
-    public TestConfig(int width, int height, BrowserType bt) {
+    public TestConfig(int width, int height, String bt) {
         this.width = width;
         this.height = height;
         this.bt = bt;
@@ -21,7 +19,7 @@ public class TestConfig {
         return height;
     }
 
-    public BrowserType getBt() {
+    public String getBrowser() {
         return bt;
     }
 }

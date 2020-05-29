@@ -1,10 +1,9 @@
 package cbt.dsl;
 
-import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,10 +11,26 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertTrue;
-
 public class SeleniumHelper {
     private WebDriver driver;
+
+    public SeleniumHelper() {
+
+    }
+
+    public void init(TestConfig config) {
+        String browser = config.getBrowser();
+        if (browser.equalsIgnoreCase("chrome")) {
+            System.setProperty("webdriver." + browser + ".driver", "src/test/resources/drivers/" + browser + "driver");
+            driver = new ChromeDriver();
+        } else {
+            System.setProperty("webdriver.gecko.driver", "src/test/resources/drivers/geckodriver");
+            driver = new FirefoxDriver();
+        }
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        driver.manage().window().setSize(new Dimension(config.getWidth(), config.getHeight()));
+        System.out.println("Test Executing in : " + browser + " with size " + driver.manage().window().getSize());
+    }
 
     public WebDriver getDriver() {
         return driver;
@@ -25,24 +40,12 @@ public class SeleniumHelper {
         this.driver = driver;
     }
 
-    public SeleniumHelper() {
-        // declaration and instantiation of objects/variables
-//        System.setProperty("webdriver.gecko.driver", "src/test/resources/drivers/chromedriver");
-//        driver = new FirefoxDriver();
-
-        System.setProperty("webdriver.chrome.driver", "src/test/resources/drivers/chromedriver");
-        driver = new ChromeDriver();
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-    }
-
     public void close() {
-        driver.close();
         driver.quit();
     }
 
     public void navitgateTo(String url) {
         driver.get(url);
-        dumpSource();
     }
 
     public int scrape() {
@@ -51,9 +54,6 @@ public class SeleniumHelper {
         for (String tag : tags) {
             String cssSelector = "div " + tag;
             List<WebElement> elements = driver.findElements(By.cssSelector(cssSelector));
-            for (WebElement element : elements) {
-                System.out.println(cssSelector + "\t" + element.getText());
-            }
             count = count + elements.size();
         }
         return count;
@@ -103,6 +103,11 @@ public class SeleniumHelper {
         return false;
     }
 
+    private boolean isDisplayed(String locator) {
+        WebElement element = driver.findElement(By.cssSelector(locator));
+        return element.isDisplayed() && element.isEnabled();
+    }
+
     private boolean isAvailable(String locator, WebElement webElement) {
         driver.manage().timeouts().implicitlyWait(0, TimeUnit.SECONDS);
         try {
@@ -132,18 +137,17 @@ public class SeleniumHelper {
 
     public int search(String text) {
         String searchInputLocator = ".custom-search-input input";
-        if (isAvailable(searchInputLocator)) {
+        if (isAvailable(searchInputLocator) && isDisplayed(searchInputLocator)) {
             type(text, searchInputLocator);
             clickOn(".header-icon_search_custom");
-
         } else {
             String searchGlassLocator = ".btn_search_mob";
             clickOn(searchGlassLocator);
 
-            String searchMop = ".search_mop_wp";
-            type(text, searchMop);
+            String searchMob = ".search_mob_wp_show input[type='text']";
+            type(text, searchMob);
 
-            String searchButton = "input[type='submit']";
+            String searchButton = ".search_mob_wp_show input[type='submit']";
             clickOn(searchButton);
         }
         return products();
@@ -269,7 +273,7 @@ public class SeleniumHelper {
                     List<WebElement> subtypes = we.findElements(By.cssSelector("li"));
                     for (WebElement st : subtypes) {
                         String label = st.findElement(By.cssSelector("label")).getText();
-                        label = label.substring(0, label.indexOf("\n"));
+                        label = label.indexOf("\n") > 0 ? label.substring(0, label.indexOf("\n")) : label;
                         retVal.add(label);
                     }
                 }

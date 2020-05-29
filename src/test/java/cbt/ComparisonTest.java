@@ -3,76 +3,86 @@
  */
 package cbt;
 
+import cbt.dsl.Configuration;
 import cbt.dsl.DslTestCase;
-import org.junit.*;
+import cbt.dsl.TestConfig;
+import org.junit.AfterClass;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
-
 public class ComparisonTest extends DslTestCase {
     static String baseUrl1 = "https://demo.applitools.com/gridHackathonV1.html";
     static String baseUrl2 = "https://demo.applitools.com/gridHackathonV2.html";
+    static Configuration configs = new Configuration();
+    static TestConfig config;
+
+    @AfterClass
+    public static void tearDown() {
+        getBrowser().close();
+    }
 
     @Test
-    public void totalElements() {
+    public void testDifferentBrowsers() {
+        for (TestConfig config : configs.getAllConfigs()) {
+            this.config = config;
+            getBrowser().init(config);
+
+            checkAccountMenu();
+            checkUserCanSearch();
+            checkTotalNumberOfShoes();
+            checkNumberOfItemsInCart();
+            checkAllFiltersAndReturnedProducts();
+            checkAllElementsOfInterest();
+        }
+    }
+
+    public void checkAllElementsOfInterest() {
         getBrowser().navitgateTo(baseUrl1);
         int firstCount = getBrowser().scrape();
         getBrowser().navitgateTo(baseUrl2);
         int secondCount = getBrowser().scrape();
-        System.out.println(firstCount + "\t" + secondCount);
-        assertEquals(firstCount, secondCount);
+        log(config, 6, "Check All Elements", "*", firstCount == secondCount);
     }
 
-    @Test
-    public void totalProducts() {
+    public void checkTotalNumberOfShoes() {
         getBrowser().navitgateTo(baseUrl1);
         int firstCount = getBrowser().products();
 
         getBrowser().navitgateTo(baseUrl2);
         int secondCount = getBrowser().products();
-        System.out.println(firstCount + "\t" + secondCount);
-        assertEquals(firstCount, secondCount);
+        log(config, 3, "Total Products Check ", "#product_grid .grid_item", firstCount == secondCount);
     }
 
-    @Test
-    public void totalItemsInCart() {
+    public void checkNumberOfItemsInCart() {
         getBrowser().navitgateTo(baseUrl1);
         String firstCount = getBrowser().getItemsInCart();
-
         getBrowser().navitgateTo(baseUrl2);
         String secondCount = getBrowser().getItemsInCart();
-        System.out.println(firstCount + "\t" + secondCount);
-        assertEquals(firstCount, secondCount);
+        log(config, 4, "Cart Items Check", ".cart_bt", firstCount.equals(secondCount));
     }
 
-    @Test
-    public void accountName() {
+    public void checkAccountMenu() {
         getBrowser().navitgateTo(baseUrl1);
         String first = getBrowser().getAccountName();
-
         getBrowser().navitgateTo(baseUrl2);
         String second = getBrowser().getAccountName();
-        System.out.println(first + "\t" + second);
-        assertEquals(first, second);
+        log(config, 1, "Account Name Check", ".access_link", first.equals(second));
     }
 
-    @Test
-    public void searchTest() {
+    public void checkUserCanSearch() {
         getBrowser().navitgateTo(baseUrl1);
-        int first = getBrowser().search("light");
-
-        getBrowser().navitgateTo(baseUrl2);
-
-        int second = getBrowser().search("light");
-
-        System.out.println(first + "\t" + second);
-        assertEquals(first, second);
+        String[] searchTerms = {"appli", "tools", "shoes"};
+        for (String searchTerm : searchTerms) {
+            int first = getBrowser().search("appli");
+            getBrowser().navitgateTo(baseUrl2);
+            int second = getBrowser().search("appli");
+            log(config, 2, "Search Results " + searchTerm, ".btn_search_mob", first == second);
+        }
     }
 
-    @Test
-    public void filterTest() {
+    public void checkAllFiltersAndReturnedProducts() {
         getBrowser().navitgateTo(baseUrl1);
         Map<String, Integer> counts1 = checkAllFilters();
 
@@ -80,24 +90,18 @@ public class ComparisonTest extends DslTestCase {
         Map<String, Integer> counts2 = checkAllFilters();
 
         for (String key : counts1.keySet()) {
-            if (counts1.get(key) != counts2.get(key)) {
-                System.out.println("Filter results for " + key + " v1:" + counts1.get(key) + " v2:" + counts2.get(key));
-            }
+            log(config, 5, "Filter Check " + key, "*", counts1.get(key) == counts2.get(key));
         }
     }
 
     private Map<String, Integer> checkAllFilters() {
         Map<String, String> filters = getBrowser().getAllFiltersMap();
         Map<String, Integer> retVal = new HashMap<>();
+
         for (String key : filters.keySet()) {
             retVal.put(key, getBrowser().filterOn(filters.get(key), key));
         }
 
         return retVal;
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        getBrowser().close();
     }
 }

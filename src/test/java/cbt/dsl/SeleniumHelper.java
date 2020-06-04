@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class SeleniumHelper {
     private WebDriver driver;
+    private Map<String, NavigationTimings> timingsMap = new HashMap<>();
 
     public SeleniumHelper() {
 
@@ -46,6 +47,8 @@ public class SeleniumHelper {
 
     public void navitgateTo(String url) {
         driver.get(url);
+        timingsMap.put(url, new NavigationTimings(url, getTimings()));
+        System.out.println(String.format("Response Time for %s was %s", url, getResponseTimeFor(url)));
     }
 
     public int scrape() {
@@ -311,5 +314,14 @@ public class SeleniumHelper {
             }
         }
         return retVal;
+    }
+
+    public String getTimings() {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        return js.executeScript("return window.performance.timing").toString();
+    }
+
+    public String getResponseTimeFor(String url) {
+        return timingsMap.get(url).getLoadTimeInMillis() + " ms";
     }
 }

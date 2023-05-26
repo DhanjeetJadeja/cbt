@@ -1,13 +1,20 @@
 plugins {
     id 'java'
-    id 'jacoco'
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
+}
+
+test {
+    useJUnitPlatform()
 }
 
 dependencies {
-    compile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '3.141.59'
-    testImplementation 'junit:junit:4.12'
+    implementation group: 'org.seleniumhq.selenium', name: 'selenium-api', version: '4.9.1'
+    implementation group: 'org.seleniumhq.selenium', name: 'selenium-remote-driver', version: '4.9.1'
+    implementation group: 'org.seleniumhq.selenium', name: 'selenium-chrome-driver', version: '4.9.1'
+    implementation group: 'org.seleniumhq.selenium', name: 'selenium-firefox-driver', version: '4.9.1'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: '5.10.0-M1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
 }

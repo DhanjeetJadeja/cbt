@@ -3,42 +3,58 @@
  */
 package cbt;
 
-import cbt.dsl.Configuration;
 import cbt.dsl.DslTestCase;
-import cbt.dsl.TestConfig;
-import org.junit.AfterClass;
-import org.junit.Test;
+import cbt.dsl.BrowserConfig;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
-public class ComparisonTest extends DslTestCase {
+import static org.openqa.selenium.remote.Browser.CHROME;
+import static org.openqa.selenium.remote.Browser.FIREFOX;
+
+public class ComparisonTest extends DslTestCase
+{
     static String baseUrl1 = "https://demo.applitools.com/gridHackathonV1.html";
     static String baseUrl2 = "https://demo.applitools.com/gridHackathonV2.html";
-    static Configuration configs = new Configuration();
-    static TestConfig config;
+    private BrowserConfig config;
 
-    @AfterClass
-    public static void tearDown() {
+    @AfterEach
+    public void tearDown()
+    {
         getBrowser().close();
     }
 
-    @Test
-    public void testDifferentBrowsers() {
-        for (TestConfig config : configs.getAllConfigs()) {
-            this.config = config;
-            getBrowser().init(config);
-
-            checkAccountMenu();
-            checkUserCanSearch();
-            checkTotalNumberOfShoes();
-            checkNumberOfItemsInCart();
-            checkAllFiltersAndReturnedProducts();
-            checkAllElementsOfInterest();
-        }
+    @ParameterizedTest
+    @MethodSource("getAllConfigs")
+    public void testDifferentBrowsers(BrowserConfig config)
+    {
+        this.config = config;
+        getBrowser().init(config);
+        checkAccountMenu();
+        checkUserCanSearch();
+        checkTotalNumberOfShoes();
+        checkNumberOfItemsInCart();
+        checkAllFiltersAndReturnedProducts();
+        checkAllElementsOfInterest();
     }
 
-    public void checkAllElementsOfInterest() {
+    static Stream<BrowserConfig> getAllConfigs()
+    {
+        return Stream.of(
+                new BrowserConfig(1920, 1080, CHROME),
+                new BrowserConfig(1280, 960, FIREFOX),
+                new BrowserConfig(768, 700, FIREFOX),
+                new BrowserConfig(375, 812, CHROME),
+                new BrowserConfig(812, 375, CHROME)
+        );
+    }
+
+    public void checkAllElementsOfInterest()
+    {
         getBrowser().navitgateTo(baseUrl1);
         int firstCount = getBrowser().scrape();
         getBrowser().navitgateTo(baseUrl2);
@@ -46,7 +62,8 @@ public class ComparisonTest extends DslTestCase {
         log(config, 6, "Check All Elements", "*", firstCount == secondCount);
     }
 
-    public void checkTotalNumberOfShoes() {
+    public void checkTotalNumberOfShoes()
+    {
         getBrowser().navitgateTo(baseUrl1);
         int firstCount = getBrowser().products();
 
@@ -55,7 +72,8 @@ public class ComparisonTest extends DslTestCase {
         log(config, 3, "Total Products Check ", "#product_grid .grid_item", firstCount == secondCount);
     }
 
-    public void checkNumberOfItemsInCart() {
+    public void checkNumberOfItemsInCart()
+    {
         getBrowser().navitgateTo(baseUrl1);
         String firstCount = getBrowser().getItemsInCart();
         getBrowser().navitgateTo(baseUrl2);
@@ -63,7 +81,8 @@ public class ComparisonTest extends DslTestCase {
         log(config, 4, "Cart Items Check", ".cart_bt", firstCount.equals(secondCount));
     }
 
-    public void checkAccountMenu() {
+    public void checkAccountMenu()
+    {
         getBrowser().navitgateTo(baseUrl1);
         String first = getBrowser().getAccountName();
         getBrowser().navitgateTo(baseUrl2);
@@ -71,10 +90,12 @@ public class ComparisonTest extends DslTestCase {
         log(config, 1, "Account Name Check", ".access_link", first.equals(second));
     }
 
-    public void checkUserCanSearch() {
+    public void checkUserCanSearch()
+    {
         getBrowser().navitgateTo(baseUrl1);
         String[] searchTerms = {"appli", "tools", "shoes"};
-        for (String searchTerm : searchTerms) {
+        for (String searchTerm : searchTerms)
+        {
             int first = getBrowser().search("appli");
             getBrowser().navitgateTo(baseUrl2);
             int second = getBrowser().search("appli");
@@ -82,23 +103,27 @@ public class ComparisonTest extends DslTestCase {
         }
     }
 
-    public void checkAllFiltersAndReturnedProducts() {
+    public void checkAllFiltersAndReturnedProducts()
+    {
         getBrowser().navitgateTo(baseUrl1);
         Map<String, Integer> counts1 = checkAllFilters();
 
         getBrowser().navitgateTo(baseUrl2);
         Map<String, Integer> counts2 = checkAllFilters();
 
-        for (String key : counts1.keySet()) {
+        for (String key : counts1.keySet())
+        {
             log(config, 5, "Filter Check " + key, "*", counts1.get(key) == counts2.get(key));
         }
     }
 
-    private Map<String, Integer> checkAllFilters() {
+    private Map<String, Integer> checkAllFilters()
+    {
         Map<String, String> filters = getBrowser().getAllFiltersMap();
         Map<String, Integer> retVal = new HashMap<>();
 
-        for (String key : filters.keySet()) {
+        for (String key : filters.keySet())
+        {
             retVal.put(key, getBrowser().filterOn(filters.get(key), key));
         }
 
